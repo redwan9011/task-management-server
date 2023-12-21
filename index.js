@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express();
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 5000
 // middleware
@@ -33,11 +33,43 @@ async function run() {
         res.send(result)
     })
 
+    app.get('/tasks/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await taskcollection.findOne(query);
+        res.send(result)
+      })
+
     app.post('/tasks' , async(req, res) => {
         const task = req.body;
         const result = await taskcollection.insertOne(task);
         res.send(result)
     })
+    app.delete('/tasks/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await taskcollection.deleteOne(query);
+        res.send(result)
+      })
+
+      app.put('/tasks/:id', async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const option = { upsert: true };
+        const task = req.body;
+        const updatetask = {
+          $set: {
+  
+            title: task.title,
+            deadlines:task.deadlines,
+            description: task.description,
+            priority:task.priority
+  
+          }
+        }
+        const result = await taskcollection.updateOne(filter, updatetask, option);
+        res.send(result)
+      })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
